@@ -83,6 +83,7 @@
           </div>
           <p>Total value: {{plate.price*plate.stock}}</p>    
           <div class="plate-item-buttons">
+
             <!--        <button @click="deletePlate(plate.id)"><i class="fa fa-trash"></i></button> -->
             <button @click="openDeleteModal(plate.id)">
               <i class="fa fa-trash"></i>
