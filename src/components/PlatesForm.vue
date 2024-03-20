@@ -1,5 +1,8 @@
 <template>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+  />
   <main>
     <section class="section-wrapper">
       <div class="box-wrapper">
@@ -12,7 +15,7 @@
               <div class="form-group">
                 <select
                   name="select"
-               defaultValue="Burguer"
+                  defaultValue="Burguer"
                   v-model="plate.name"
                   @change="changeImage"
                   placeholder="Select a plate"
@@ -32,13 +35,13 @@
 
               <div class="form-group">
                 <input
-                type="number"
+                  type="number"
                   v-model.number="plate.price"
                   placeholder="price of plate"
                   name="price"
                   required
                   value=""
-                  @input="validatePositiveNumber($event,'price')"
+                  @input="validatePositiveNumber($event, 'price')"
                 />
               </div>
               <div class="form-group">
@@ -49,7 +52,7 @@
                   name="stock"
                   required
                   value=""
-                  @input="validatePositiveNumber($event,'stock')"
+                  @input="validatePositiveNumber($event, 'stock')"
                 />
               </div>
 
@@ -67,9 +70,6 @@
       </div>
     </section>
 
-
-    
-
     <section class="plate-list">
       <div v-for="plate in plates" :key="plate.id" class="plate-item">
         <div class="plate-item-image">
@@ -79,27 +79,54 @@
           <h2>{{ plate.name }}</h2>
           <div class="une">
             <p>Unit price: ${{ plate.price }}</p>
-            <p>Stock: {{ plate.stock }}</p>    
+            <p>Stock: {{ plate.stock }}</p>
           </div>
           <p>Total value: {{plate.price*plate.stock}}</p>    
           <div class="plate-item-buttons">
-            <button  @click="openDeleteModal(plate.id)"><i class="fa fa-trash"></i></button>
+
+            <!--        <button @click="deletePlate(plate.id)"><i class="fa fa-trash"></i></button> -->
+            <button @click="openDeleteModal(plate.id)">
+              <i class="fa fa-trash"></i>
+            </button>
+
+
             <div v-if="showDeleteModal[plate.id]" class="modal-overlay">
               <div class="modal">
                 <div class="modal-content">
                   <p>you want to remove all stock or just one product?</p>
                   <div class="modal-buttons">
-                    <button @click="deletePlate(plate.id)">Remove all Stock</button>
-                    <button @click="deleteOnePlate(plate)">Remove a Stock</button>
+                    <button @click="deletePlate(plate.id)">
+                      Remove all Stock
+                    </button>
+                    <button @click="deleteOnePlate(plate)">
+                      Remove a Stock
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
-            
           </div>
         </div>
       </div>
     </section>
+    <div class="show-total-count" v-if="plates.length > 0">
+      <button class="submit-button" @click="openCountModal()">
+        Show total count
+      </button>
+      <div class="plate-item-buttons">
+        <div v-if="showCountModal" class="modal-overlay">
+          <div class="modal">
+            <div class="modal-content">
+              <!-- Contenido de la modal -->
+              <p>Total count: {{ totalCount }}</p>
+              <div class="modal-buttons">
+                <button @click="closeCountModal()">Pay</button>
+                              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -111,6 +138,8 @@ export default {
   name: "PlatesForm",
   setup() {
     const showDeleteModal = ref([]);
+    const showCountModal = ref(false);
+    const totalCount = ref(0);
     const platesNames = staticPlates.map((food) => food.name);
     const plates = ref([]);
     const plate = ref({
@@ -122,6 +151,8 @@ export default {
       valorTotal: 0,
     });
     plate.value.image = staticPlates[0].image;
+
+    
 
     const changeImage = () => {
       const selectedPlate = staticPlates.find(
@@ -161,8 +192,6 @@ const validatePositiveNumber = (event,field) => {
   }
 };
 
-
-
 const deleteOnePlate = (plate) => {
   if (plate.stock > 0) {
     plate.stock -= 1;
@@ -173,6 +202,14 @@ const deleteOnePlate = (plate) => {
   closeDeleteModal(plate.id);
 };
 
+const openCountModal = () =>{
+  showCountModal.value = true;
+};
+
+const closeCountModal = () => {
+  showCountModal.value = false;
+};
+
 const openDeleteModal = (id) => {
     showDeleteModal.value[id] = true;
   };
@@ -181,6 +218,7 @@ const closeDeleteModal = (id) => {
 };
 
     return {
+      totalCount,
       plate,
       plates,
       createPlate,
@@ -193,16 +231,18 @@ const closeDeleteModal = (id) => {
       deleteOnePlate,
       closeDeleteModal,
       openDeleteModal,
+      openCountModal,
+      closeCountModal,
+      showCountModal,
     };
   },
 };
 </script>
 
 <style>
-
 :root {
   --main_color: #ff8000;
-  --second_color:rgb(234, 233, 233);
+  --second_color: rgb(234, 233, 233);
 }
 main::before {
   content: "";
@@ -268,8 +308,6 @@ main::before {
   width: 100%;
 }
 
-
-
 .form-group {
   float: left;
   padding: 0px 30px;
@@ -302,9 +340,14 @@ main::before {
   box-shadow: none;
 }
 
-.form-group:nth-child(5):hover {
+.submit-button:hover {
   transform: scale(1.1);
   transition: all 3s ease;
+}
+
+.show-total-count button {
+  margin-bottom: 1rem;
+  margin-left: 25rem;
 }
 
 .submit-button {
@@ -314,17 +357,21 @@ main::before {
   outline: none;
   border: none;
   cursor: pointer;
-
   text-align: center;
-  background-color: #1a3492;
+  background-color: #ff8000;
+  color: #ffffff;
+  box-shadow: none;
+  border-radius: 25px;
+  padding: 20px;
 }
 
-.form-group input, select ::placeholder{
-  color:white
+.form-group input,
+select ::placeholder {
+  color: white;
 }
 
 .form-group select {
-  color:white
+  color: white;
 }
 
 select {
@@ -342,8 +389,6 @@ option {
   color: white;
 }
 
-
-
 /*lista de platos*/
 .plate-list {
   display: grid;
@@ -358,7 +403,7 @@ option {
   grid-template-rows: auto auto auto; /* Tres filas de altura automática */
   justify-content: center; /* Centra los elementos horizontalmente */
   align-items: center; /* Centra los elementos verticalmente */
- overflow: hidden;
+  overflow: hidden;
   background-color: var(--second_color);
   color: black;
   border-radius: 2.5rem;
@@ -371,29 +416,26 @@ option {
   border-top-right-radius: 10px;
 }
 
-.plate-item-details{
+.plate-item-details {
   display: flex;
   flex-direction: column;
   text-align: center;
   font-size: 1.2rem;
 }
 
-.plate-item-details h2{
+.plate-item-details h2 {
   grid-row: 1;
   text-align: center;
 }
 
-
-.une{
+.une {
   display: flex;
   justify-content: space-around;
   align-items: center;
   margin: 10px 0;
-
 }
-.une p{
+.une p {
   font-size: 1.2rem;
-
 }
 
 .plate-item-buttons {
@@ -420,7 +462,6 @@ option {
 }
 /*lista de platos*/
 
-
 /*stylos modal*/
 .modal-overlay {
   position: fixed;
@@ -428,27 +469,26 @@ option {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2; 
+  z-index: 2;
 }
 
 .modal {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); 
-  z-index: 2; 
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  z-index: 2;
 }
 
-.modal-buttons{
+.modal-buttons {
   margin-top: 0.5rem;
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-
 }
 
 /*stylos modal*/
