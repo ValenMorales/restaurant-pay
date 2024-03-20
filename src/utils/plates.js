@@ -2,7 +2,7 @@
 const staticPlates = [
     {
         "name": "Burguer",
-            "image":"../public/burguer.jpg"
+        "image":"../public/hamburguer.jpg"
     },
     {
         "name": "Pizza",
@@ -10,7 +10,27 @@ const staticPlates = [
     },
     {
         "name": "Hot Dog",
-        "image":"../public/burguer.jpg"
+        "image":"../public/hotDogf.jpg"
+    },
+    {
+        "name": "Lasagna",
+        "image":"../public/Lasagna.jpg"
+    },
+    {
+        "name": "Potato sausage",
+        "image":"../public/potatoSausage.jpg"
+    },
+    {
+        "name": "Dessert",
+        "image":"../public/dessert.jpg"
+    },
+    {
+        "name": "Soda",
+        "image":"../public/sodaff.jpg"
+    },
+    {
+        "name": "Water",
+        "image":"../public/waterf.jpg"
     }
 ];
 

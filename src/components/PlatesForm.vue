@@ -1,4 +1,5 @@
 <template>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <main>
     <section class="section-wrapper">
       <div class="box-wrapper">
@@ -14,6 +15,7 @@
                defaultValue="Burguer"
                   v-model="plate.name"
                   @change="changeImage"
+                  placeholder="Select a plate"
                 >
                   <option
                     v-for="(name, index) in names"
@@ -25,17 +27,18 @@
                 </select>
               </div>
               <div class="form-group">
-                <img :src="image" alt="" />
+                <img :src="plate.image" alt="" />
               </div>
 
               <div class="form-group">
                 <input
-                  type="number"
+                type="number"
                   v-model.number="plate.price"
                   placeholder="price of plate"
                   name="price"
                   required
-                  value="null"
+                  value=""
+                  @input="validatePositiveNumber($event,'price')"
                 />
               </div>
               <div class="form-group">
@@ -45,7 +48,8 @@
                   placeholder="Number of plates"
                   name="stock"
                   required
-                  value="null"
+                  value=""
+                  @input="validatePositiveNumber($event,'stock')"
                 />
               </div>
 
@@ -63,17 +67,41 @@
       </div>
     </section>
 
-    <h1>Plate list</h1>
-    <div v-for="item in plates" :key="item.id">
-      <h2>{{ item.name }}</h2>
-      <p>Price: {{ item.price }}</p>
-      <p>Stock: {{ item.stock }}</p>
-    </div>
 
-    <h1>Plate list</h1>
-    <div v-for="item in sPlates">
-      <h2>{{ item }}</h2>
-    </div>
+    
+
+    <section class="plate-list">
+      <div v-for="plate in plates" :key="plate.id" class="plate-item">
+        <div class="plate-item-image">
+          <img :src="plate.image" :alt="plate.name" />
+        </div>
+        <div class="plate-item-details">
+          <h2>{{ plate.name }}</h2>
+          <div class="une">
+            <p>Unit price: ${{ plate.price }}</p>
+            <p>Stock: {{ plate.stock }}</p>    
+          </div>
+          <div class="plate-item-buttons">
+<!--        <button @click="deletePlate(plate.id)"><i class="fa fa-trash"></i></button> -->
+            <button  @click="openDeleteModal(plate.id)"><i class="fa fa-trash"></i></button>
+
+            <div v-if="showDeleteModal[plate.id]" class="modal-overlay">
+              <div class="modal">
+                <div class="modal-content">
+                  <!-- Contenido de la modal -->
+                  <p>you want to remove all stock or just one product?</p>
+                  <div class="modal-buttons">
+                    <button @click="deletePlate(plate.id)">Remove all Stock</button>
+                    <button @click="deleteOnePlate(plate)">Remove a Stock</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -84,35 +112,74 @@ import staticPlates from "../utils/plates.js";
 export default {
   name: "PlatesForm",
   setup() {
+    const showDeleteModal = ref([]);
     const platesNames = staticPlates.map((food) => food.name);
-    const image = ref(staticPlates[0].image);
-    const images = staticPlates.map((food) => food.image);
-
     const plates = ref([]);
     const plate = ref({
       id: 0,
       name: "",
-      price: 0,
-      stock: 0,
+      price: "",
+      stock: "",
+      image: "",
     });
+    plate.value.image = staticPlates[0].image;
 
     const changeImage = () => {
-      const index = staticPlates.findIndex(
+      const selectedPlate = staticPlates.find(
         (food) => food.name === plate.value.name
       );
-      image.value = staticPlates[index].image;
+      if (selectedPlate) {
+        plate.value.image = selectedPlate.image;
+      } else {
+        plate.value.image = "";
+      }
     };
 
-    const createPlate = () => {
-      plate.value.id++;
-      plates.value.push({ ...plate.value });
+    const resetPlate = (id) => {
       plate.value = {
-        id: plate.value.id,
-        name: "",
-        price: 0,
-        stock: 0,
+        id: id,
+        name: "Burger",
+        price: "",
+        stock: "",
+        image: staticPlates[0].image,
       };
     };
+    const deletePlate = (id) => {
+      plates.value = plates.value.filter((plate) => plate.id !== id);
+      closeDeleteModal(id);
+    };
+    const createPlate = () => {
+    plate.value.id++;
+    plates.value.push({ ...plate.value });
+    resetPlate(plate.value.id);
+};
+
+const validatePositiveNumber = (event,field) => {
+  if (event.target.value < 0) {
+    event.target.value = 0;
+    plate.value[field] = 0;
+
+  }
+};
+
+
+
+const deleteOnePlate = (plate) => {
+  if (plate.stock > 0) {
+    plate.stock -= 1;
+    if (plate.stock === 0) {
+      deletePlate(plate.id);
+    }
+  }
+  closeDeleteModal(plate.id);
+};
+
+const openDeleteModal = (id) => {
+    showDeleteModal.value[id] = true;
+  };
+const closeDeleteModal = (id) => {
+  showDeleteModal.value[id] = false;
+};
 
     return {
       plate,
@@ -120,15 +187,24 @@ export default {
       createPlate,
       sPlates: staticPlates,
       names: platesNames,
-      image,
-      images,
       changeImage,
+      deletePlate,
+      validatePositiveNumber,
+      showDeleteModal,
+      deleteOnePlate,
+      closeDeleteModal,
+      openDeleteModal,
     };
   },
 };
 </script>
 
-<style scoped>
+<style>
+
+:root {
+  --main_color: #ff8000;
+  --second_color:rgb(234, 233, 233);
+}
 main::before {
   content: "";
   background-image: url(../public/mainfond.jpg);
@@ -189,10 +265,11 @@ main::before {
   outline: none;
   background: none;
   font-size: 18px;
-  color: #000000;
   padding: 20px 10px 20px 5px;
   width: 100%;
 }
+
+
 
 .form-group {
   float: left;
@@ -242,4 +319,135 @@ main::before {
   text-align: center;
   background-color: #1a3492;
 }
+
+.form-group input, select ::placeholder{
+  color:white
+}
+
+.form-group select {
+  color:white
+}
+
+select {
+  color: white;
+  background-color: black;
+  border: none;
+  padding: 20px 10px 20px 5px;
+  font-size: 18px;
+  width: 100%;
+}
+
+/* Estilo para todas las opciones */
+option {
+  background-color: black;
+  color: white;
+}
+
+
+
+/*lista de platos*/
+.plate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+  margin-bottom: 4rem;
+}
+
+.plate-item {
+  display: grid;
+  grid-template-rows: auto auto auto; /* Tres filas de altura automática */
+  justify-content: center; /* Centra los elementos horizontalmente */
+  align-items: center; /* Centra los elementos verticalmente */
+ overflow: hidden;
+  background-color: var(--second_color);
+  color: black;
+  border-radius: 2.5rem;
+}
+
+.plate-item-image img {
+  width: 100%;
+  height: auto;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.plate-item-details{
+  display: flex;
+  flex-direction: column;
+}
+
+.plate-item-details h2{
+  grid-row: 1;
+  text-align: center;
+}
+
+
+.une{
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin: 10px 0;
+
+}
+.une p{
+  font-size: 1.2rem;
+
+}
+
+.plate-item-buttons {
+  grid-row: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.plate-item-buttons button {
+  background-color: var(--main_color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.6rem;
+}
+.plate-item-buttons button:hover {
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}
+/*lista de platos*/
+
+
+/*stylos modal*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2; 
+}
+
+.modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); 
+  z-index: 2; 
+}
+
+.modal-buttons{
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+
+}
+
+/*stylos modal*/
 </style>
