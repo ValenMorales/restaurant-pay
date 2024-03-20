@@ -81,14 +81,12 @@
             <p>Unit price: ${{ plate.price }}</p>
             <p>Stock: {{ plate.stock }}</p>    
           </div>
+          <p>Total value: {{plate.price*plate.stock}}</p>    
           <div class="plate-item-buttons">
-<!--        <button @click="deletePlate(plate.id)"><i class="fa fa-trash"></i></button> -->
             <button  @click="openDeleteModal(plate.id)"><i class="fa fa-trash"></i></button>
-
             <div v-if="showDeleteModal[plate.id]" class="modal-overlay">
               <div class="modal">
                 <div class="modal-content">
-                  <!-- Contenido de la modal -->
                   <p>you want to remove all stock or just one product?</p>
                   <div class="modal-buttons">
                     <button @click="deletePlate(plate.id)">Remove all Stock</button>
@@ -121,6 +119,7 @@ export default {
       price: "",
       stock: "",
       image: "",
+      valorTotal: 0,
     });
     plate.value.image = staticPlates[0].image;
 
@@ -150,7 +149,7 @@ export default {
     };
     const createPlate = () => {
     plate.value.id++;
-    plates.value.push({ ...plate.value });
+    plates.value.push({ ...plate.value, valorTotal: plate.value.price * plate.value.stock });
     resetPlate(plate.value.id);
 };
 
@@ -375,6 +374,8 @@ option {
 .plate-item-details{
   display: flex;
   flex-direction: column;
+  text-align: center;
+  font-size: 1.2rem;
 }
 
 .plate-item-details h2{
@@ -411,6 +412,7 @@ option {
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1.6rem;
+  margin-top: 0.4rem;
 }
 .plate-item-buttons button:hover {
   transform: scale(1.1);
