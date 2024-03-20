@@ -88,8 +88,10 @@
         <div v-if="showCountModal" class="modal-overlay">
           <div class="modal">
             <div class="modal-content">
-              <!-- Contenido de la modal -->
-              <p>Total count: {{ totalCount }}</p>
+            
+              <p v-if="totalCount > 0" >Total count: {{ totalCount }}</p>
+              <p v-else>You don't have pays pending
+              </p>
               <div class="modal-buttons">
                 <button @click="closeCountModal()">Pay</button>
                               </div>
@@ -102,7 +104,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref , computed} from "vue";
 import staticPlates from "../utils/plates.js";
 
 export default {
@@ -110,7 +112,11 @@ export default {
   setup() {
     const showDeleteModal = ref([]);
     const showCountModal = ref(false);
-    const totalCount = ref(0);
+    const totalCount = computed(() => {
+      return plates.value.reduce((total, plate) => {
+        return total + (plate.price * plate.stock);
+      }, 0);
+    });
     const platesNames = staticPlates.map((food) => food.name);
     const plates = ref([]);
     const visibleSearch = ref(false);
@@ -124,8 +130,7 @@ export default {
     });
     plate.value.image = staticPlates[0].image;
 
-    
-
+  
     const changeImage = () => {
       const selectedPlate = staticPlates.find(
         (food) => food.name === plate.value.name
@@ -545,6 +550,13 @@ option {
   font-size: 1.3rem;
   margin-top: 0.4rem;
   border: none;
+}
+
+.modal-content p{
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 1rem;
+  font-weight: 700;
 }
 
 /*stylos modal*/
