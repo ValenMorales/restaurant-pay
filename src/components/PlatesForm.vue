@@ -65,8 +65,6 @@
                     <div class="two">
                       <button @click="deletePlate(plate.id)">Remove all Stock</button>
                       <button @click="deleteOnePlate(plate)">Remove a Stock</button>
-                    </div>
-                    <div class="addStock">
                       <button @click="AddStock(plate)">Add a Stock</button>
                     </div>
                   </div>
@@ -91,6 +89,7 @@
               </p>
               <div class="modal-buttons">
                 <button @click="closeCountModal()">Pay</button>
+                <button @click="closeCountModalA()">After</button>
               </div>
             </div>
           </div>
@@ -256,6 +255,11 @@ export default {
         deleteAllPlates();
       }
     };
+
+    /*funcion para cerrar el modal de cuenta cuando desea pagar despues*/
+    const closeCountModalA = () => {
+      showCountModal.value = false;
+    };
     /*funcion para abrir el modal de eliminar plato*/
     const openDeleteModal = (id) => {
       showDeleteModal.value[id] = true;
@@ -287,6 +291,7 @@ export default {
       getTotalCount,
       updateCopyPlates,
       validateStock,
+      closeCountModalA,
 
     };
   },
@@ -574,15 +579,22 @@ option {
   color: black;
   font-size: 1.2rem;
 }
-
 .modal-buttons {
-  margin-top: 0.5rem;
   display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  flex-direction: column;
-
 }
+
+.modal-buttons button {
+  padding: 10px 20px;
+  font-size: 1.3rem;
+  margin-top: 0.4rem;
+  border: none;
+  margin-right: 10px; 
+}
+
+.modal-buttons button:last-child {
+  margin-right: 0;
+}
+
 
 .two {
   display: flex;
@@ -596,12 +608,6 @@ option {
   margin: 0 10px;
 }
 
-.modal-buttons button {
-  padding: 10px 20px;
-  font-size: 1.3rem;
-  margin-top: 0.4rem;
-  border: none;
-}
 
 .modal-content p {
   font-size: 1.2rem;
