@@ -1,8 +1,5 @@
 <template>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
   <main>
     <section class="section-wrapper">
       <div class="box-wrapper">
@@ -21,7 +18,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <img :src="plate.image" alt="" />
+                <img :src="plate.image" :alt="plate.name" />
               </div>
 
               <div class="form-group">
@@ -30,7 +27,7 @@
               </div>
               <div class="form-group">
                 <input type="number" v-model.number="plate.stock" placeholder="Number of plates" name="stock" required
-                  value="" @input="validatePositiveNumber($event, 'stock')" />
+                  value="" @input="validateStock($event, 'stock')" />
               </div>
 
               <div class="form-group">
@@ -57,7 +54,7 @@
             <p>Unit price: <i class="fa fa-usd"></i>{{ plate.price }}</p>
             <p>Stock: {{ plate.stock }}</p>
           </div>
-          <p>Total value: <i class="fa fa-usd"></i>{{ plate.price * plate.stock }}</p>
+          <p>Total value: <i class="fa fa-usd"></i>{{ plate.valorTotal }}</p>
           <div class="plate-item-buttons">
             <button @click="openDeleteModal(plate.id)"><i class="fa fa-trash"></i></button>
             <div v-if="showDeleteModal[plate.id]" class="modal-overlay">
@@ -88,13 +85,13 @@
         <div v-if="showCountModal" class="modal-overlay">
           <div class="modal">
             <div class="modal-content">
-            
-              <p v-if="totalCount > 0" >Total count: {{ totalCount }}</p>
+
+              <p v-if="getTotalCount() > 0">Total count: {{ getTotalCount() }}</p>
               <p v-else>You don't have pays pending
               </p>
               <div class="modal-buttons">
                 <button @click="closeCountModal()">Pay</button>
-                              </div>
+              </div>
             </div>
           </div>
         </div>
@@ -104,7 +101,7 @@
 </template>
 
 <script>
-import { ref , computed} from "vue";
+import { ref } from "vue";
 import staticPlates from "../utils/plates.js";
 
 export default {
@@ -112,14 +109,10 @@ export default {
   setup() {
     const showDeleteModal = ref([]);
     const showCountModal = ref(false);
-    const totalCount = computed(() => {
-      return plates.value.reduce((total, plate) => {
-        return total + (plate.price * plate.stock);
-      }, 0);
-    });
     const platesNames = staticPlates.map((food) => food.name);
     const plates = ref([]);
     const visibleSearch = ref(false);
+    /*plantilla e estructura de los platos*/
     const plate = ref({
       id: 0,
       name: platesNames[0],
@@ -128,9 +121,13 @@ export default {
       image: "",
       valorTotal: 0,
     });
+    /*copia para manejar los platos en busqueda y que no se eliminen los originales*/
+    let copyPlates = [];
+
+    /*pone la primer imagen en la plantilla*/
     plate.value.image = staticPlates[0].image;
 
-  
+    /*cambia la imagen dependiendo de la seleccionada*/
     const changeImage = () => {
       const selectedPlate = staticPlates.find(
         (food) => food.name === plate.value.name
@@ -142,6 +139,7 @@ export default {
       }
     };
 
+    /*reset el form para que el suario pueda crear otro plato*/
     const resetPlate = (id) => {
       plate.value = {
         id: id,
@@ -151,67 +149,87 @@ export default {
         image: staticPlates[0].image,
       };
     };
+
+    /*funcion para eliminar un plato completo guardando y setiando platos y copyPLates*/
     const deletePlate = (id) => {
+      updatePlates();
+      cleanSearch();
       plates.value = plates.value.filter((plate) => plate.id !== id);
+      updateCopyPlates();
       closeDeleteModal(id);
       if (plates.value.length === 0) {
         visibleSearch.value = false;
       }
+    }
+    /*funcion para agregar un plato a la lista de platos*/
+    const AddStock = (plate) => {
+      updatePlates();
+      cleanSearch();
+      plate.stock += 1;
+      plate.valorTotal = plate.price * plate.stock;
+      updateCopyPlates();
+      closeDeleteModal(plate.id);
     };
-
+    /*funcion para eliminar un plato de la lista de platos mas bien un stock se podria decir*/
+      const deleteOnePlate = (plate) => {
+        if (plate.stock > 0) {
+          updatePlates();
+          cleanSearch();
+          plate.stock -= 1;
+          plate.valorTotal = plate.price * plate.stock;
+          updateCopyPlates();
+          if (plate.stock === 0) {
+            deletePlate(plate.id);
+          }
+        }
+        closeDeleteModal(plate.id);
+      };
+      /*funcion para crear un plato y agregarlo a la lista de platos*/
+        const createPlate = () => {
+          plate.value.id++;
+          const newPlate = { ...plate.value, valorTotal: plate.value.price * plate.value.stock };
+          plates.value.push(newPlate);
+          copyPlates.push(newPlate);
+          resetPlate(plate.value.id);
+          visibleSearch.value = true;
+        };
+      /*funcion para validar que el numero sea positivo*/
     const validatePositiveNumber = (event, field) => {
       if (event.target.value < 0) {
         event.target.value = 0;
         plate.value[field] = 0;
-
       }
     };
-
-
-    const AddStock = (plate) => {
-      plate.stock += 1;
-      plate.valorTotal = plate.price * plate.stock;
-      closeDeleteModal(plate.id);
+    /*fvalidacion para que el numero de platos sea mayor a 1 */
+    const validateStock = (event) => {
+      const value = parseInt(event.target.value);
+      if (isNaN(value) || value < 1) {
+        event.target.value = "";
     };
-
-    const deleteOnePlate = (plate) => {
-      if (plate.stock > 0) {
-        plate.stock -= 1;
-        if (plate.stock === 0) {
-          deletePlate(plate.id);
-        }
-      }
-      closeDeleteModal(plate.id);
-    };
-
-    let copyPlates = [];
-
-    const createPlate = () => {
-      plate.value.id++;
-      plates.value.push({ ...plate.value, valorTotal: plate.value.price * plate.value.stock });
-      copyPlates = [...plates.value];
-      resetPlate(plate.value.id);
-      visibleSearch.value = true;
-    };
-
-
-const openCountModal = () =>{
-  showCountModal.value = true;
-};
-
-const closeCountModal = () => {
-  showCountModal.value = false;
-};
-
-const openDeleteModal = (id) => {
-    showDeleteModal.value[id] = true;
   };
-const closeDeleteModal = (id) => {
-  showDeleteModal.value[id] = false;
-};
 
-    const searchPlates = (event) => {
-      const search = event.target.value.toLowerCase();
+  /*funcion para limpiar el campo de busqueda*/
+    const cleanSearch = () => {
+      document.querySelector(".search input").value = "";
+    };
+
+    /*funcion para eliminar todos los platos*/
+    const deleteAllPlates = () => {
+      plates.value = [];
+      copyPlates = [];
+      visibleSearch.value = false;
+    }
+    /*funcion para actualizar la copia de los platos*/
+    const updateCopyPlates = () => {
+      copyPlates = [...plates.value];
+    };
+    /*funcion para actualizar los platos*/
+    const updatePlates = () => {
+      plates.value = [...copyPlates];
+    };
+    /*funcion para buscar los platos*/
+    const searchPlates = () => {
+      const search = document.querySelector('.search input').value.toLowerCase();
       if (search.length > 0) {
         const filteredPlates = copyPlates.filter((plate) =>
           plate.name.toLowerCase().includes(search)
@@ -222,9 +240,32 @@ const closeDeleteModal = (id) => {
       }
     };
 
+    /*funcion para obtener el total de la cuenta*/
+    const getTotalCount = () => {
+      return copyPlates.reduce((total, plate) => total + plate.valorTotal, 0);
+    };
+
+    /*funcion para abrir el modal de cuenta*/
+    const openCountModal = () => {
+      showCountModal.value = true;
+    };
+    /*funcion para cerrar el modal de cuenta*/
+    const closeCountModal = () => {
+      showCountModal.value = false;
+      if (getTotalCount() != 0) {
+        deleteAllPlates();
+      }
+    };
+    /*funcion para abrir el modal de eliminar plato*/
+    const openDeleteModal = (id) => {
+      showDeleteModal.value[id] = true;
+    };
+    /*funcion para cerrar el modal de eliminar plato*/
+    const closeDeleteModal = (id) => {
+      showDeleteModal.value[id] = false;
+    };
 
     return {
-      totalCount,
       plate,
       plates,
       createPlate,
@@ -243,6 +284,10 @@ const closeDeleteModal = (id) => {
       visibleSearch,
       searchPlates,
       AddStock,
+      getTotalCount,
+      updateCopyPlates,
+      validateStock,
+
     };
   },
 };
@@ -363,8 +408,9 @@ main::before {
 }
 
 .show-total-count button {
-  margin-bottom: 1rem;
-  margin-left: 25rem;
+  margin: 0 auto;
+  display: block;
+  text-align: center;
 }
 
 .submit-button {
@@ -434,9 +480,12 @@ option {
 
 .plate-item {
   display: grid;
-  grid-template-rows: auto auto auto; /* Tres filas de altura automática */
-  justify-content: center; /* Centra los elementos horizontalmente */
-  align-items: center; /* Centra los elementos verticalmente */
+  grid-template-rows: auto auto auto;
+  /* Tres filas de altura automática */
+  justify-content: center;
+  /* Centra los elementos horizontalmente */
+  align-items: center;
+  /* Centra los elementos verticalmente */
   overflow: hidden;
   background-color: var(--second_color);
   color: black;
@@ -522,7 +571,7 @@ option {
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
   z-index: 2;
-  color:black;
+  color: black;
   font-size: 1.2rem;
 }
 
@@ -554,7 +603,7 @@ option {
   border: none;
 }
 
-.modal-content p{
+.modal-content p {
   font-size: 1.2rem;
   text-align: center;
   margin-top: 1rem;
